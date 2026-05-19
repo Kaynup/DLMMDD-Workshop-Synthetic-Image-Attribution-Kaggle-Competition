@@ -56,11 +56,12 @@ submission.csv (Ready for Kaggle!)
 
 **Exact File Paths (Kaggle Environment):**
 ```
-Input Files (in /kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/):
-  - training.csv           (7000 rows: ID, path, y)
-  - test.csv               (3000 rows: ID, path)
-  - Data/Training/         (7000 .png files)
-  - Data/Test/             (3000 .png files)
+NOTE: Double Data directory structure - /Data/Data/
+Full paths (from root):
+  - training.csv: /kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/Data/training.csv
+  - test.csv: /kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/Data/test.csv
+  - Training/: /kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/Data/Training/ (7000 .png files)
+  - Test/: /kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/Data/Test/ (3000 .png files)
 
 Output Files (Created in /kaggle/working/):
   - logs/training_log.csv
@@ -74,7 +75,7 @@ Output Files (Created in /kaggle/working/):
 
 **Exact Base Paths:**
 ```python
-BASE_INPUT = '/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/'
+BASE_INPUT = '/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/'
 
 # CSV paths
 train_csv_path = f'{BASE_INPUT}Data/training.csv'
@@ -98,7 +99,7 @@ test.csv columns: ID, path
 **Step 1.1: Load CSVs**
 ```python
 # EXACT CODE PATTERN for Kaggle
-BASE_INPUT = '/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/'
+BASE_INPUT = '/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/'
 
 train_df = pd.read_csv(f'{BASE_INPUT}Data/training.csv')  # shape: (7000, 3)
 test_df = pd.read_csv(f'{BASE_INPUT}Data/test.csv')       # shape: (3000, 2)
