@@ -54,48 +54,59 @@ submission.csv (Ready for Kaggle!)
 
 **Reference:** `docs/01_DATA_LOADING_VALIDATION/`
 
-**Exact File Paths (Relative to Workspace Root):**
+**Exact File Paths (Kaggle Environment):**
 ```
-Input Files:
-  - ../training.csv                    (7000 rows: image_id, source)
-  - ../test.csv                        (3000 rows: image_id only)
-  - ../Data/Training/                  (7000 .png files, 1000 per class)
-  - ../Data/Test/                      (3000 .png files)
+Input Files (in /kaggle/input/competitions/):
+  - training.csv           (7000 rows: ID, path, y)
+  - test.csv               (3000 rows: ID, path)
+  - Data/Training/         (7000 .png files)
+  - Data/Test/             (3000 .png files)
 
-Output Files (Created in pipe-1/):
-  - logs/data_validation_report.txt    (Pass/fail checks)
-  - logs/data_stats.json               (Statistics)
-  - preprocessed/fold_metadata.json    (Train/val split info)
+Output Files (Created in /kaggle/working/):
+  - logs/training_log.csv
+  - logs/validation_metrics.csv
+  - preprocessed/X_train_preprocessed.npy
+  - preprocessed/X_test_preprocessed.npy
+  - checkpoints/fold_*/epoch_*.pth (500 total)
+  - final_models/fold_*_best.pth (5 best)
+  - submission/submission.csv ← UPLOAD THIS
 ```
 
-**Exact Imports Required:**
+**Exact Base Paths:**
 ```python
-import pandas as pd
-import json
-import os
-from pathlib import Path
-from PIL import Image
-import numpy as np
+BASE_INPUT = '/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/'
+BASE_WORKING = '/kaggle/working/'
 
-# For logging
-import logging
-logging.basicConfig(level=logging.INFO, 
-                    format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+# CSV paths
+train_csv_path = f'{BASE_INPUT}training.csv'
+test_csv_path = f'{BASE_INPUT}test.csv'
+```
+
+**CSV Structure:**
+```
+training.csv columns: ID, path, y
+  ID: integer image identifier
+  path: relative path like "Data/Training/123.png"
+  y: numeric class index (0-9)
+
+test.csv columns: ID, path
+  ID: integer image identifier  
+  path: relative path like "Data/Test/456.png"
 ```
 
 **Exact Execution Steps:**
 
 **Step 1.1: Load CSVs**
 ```python
-# EXACT CODE PATTERN
-import os
-os.chdir('/home/legionlinux/miniconda3/envs/torchenv/__INIT__/Kaggle/dlmmdd-workshop-synthetic-source-attribution-challenge')
+# EXACT CODE PATTERN for Kaggle
+BASE_INPUT = '/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/'
 
-train_df = pd.read_csv('training.csv')    # shape should be (7000, 2)
-test_df = pd.read_csv('test.csv')         # shape should be (3000, 1)
+train_df = pd.read_csv(f'{BASE_INPUT}training.csv')  # shape: (7000, 3)
+test_df = pd.read_csv(f'{BASE_INPUT}test.csv')       # shape: (3000, 2)
 
 logger.info(f"Loaded training.csv: {train_df.shape}")
+logger.info(f"  Columns: {list(train_df.columns)}")
+logger.info(f"  Sample path: {train_df['path'].iloc[0]}")
 logger.info(f"Loaded test.csv: {test_df.shape}")
 
 # VERIFY COLUMN NAMES
@@ -119,7 +130,7 @@ else:
 
 test_missing = []
 for idx, row in test_df.iterrows():
-    path = f"Data/Test/{row['image_id']}.png"
+    path = f"{BASE_INPUT}{row['path']}"
     if not os.path.exists(path):
         test_missing.append(path)
         
@@ -131,15 +142,29 @@ else:
 
 **Step 1.3: Extract Image Metadata**
 ```python
+# EXACT: Create class mapping (numeric → name)
+class_idx_to_name = {
+    0: 'AuraFlow',
+    1: 'Freepik',
+    2: 'Lumina',
+    3: 'Photon',
+    4: 'Pixart-sigma',
+    5: 'Playground v2.5',
+    6: 'StableDiffusion3',
+    7: 'StableDiffusion3.5',
+    8: 'StableDiffusionXL-Turbo',
+    9: 'Tencent Hunyuan'
+}
+
 # EXACT: For each image, get dimensions and file size
 train_metadata = []
 for idx, row in train_df.iterrows():
-    path = f"Data/Training/{row['image_id']}.png"
+    path = f"{BASE_INPUT}{row['path']}"
     img = Image.open(path)
     size_bytes = os.path.getsize(path)
     train_metadata.append({
-        'image_id': row['image_id'],
-        'source': row['source'],
+        'image_id': row['ID'],
+        'source': class_idx_to_name[row['y']],  # Convert numeric y to class name
         'width': img.width,
         'height': img.height,
         'format': img.format,
@@ -164,23 +189,24 @@ for class_name, count in class_counts.items():
 logger.info("✓ All 10 classes have exactly 1000 images")
 
 # VERIFY: No duplicate IDs
-assert len(train_df) == len(train_df['image_id'].unique()), "Duplicate image IDs found"
+assert len(train_df) == len(train_df['ID'].unique()), "Duplicate image IDs found"
 logger.info("✓ No duplicate image IDs")
 ```
 
 **Outputs After Stage 1:**
-- `train_df`: 7000 rows, columns=['image_id', 'source']
-- `test_df`: 3000 rows, columns=['image_id']
-- `train_metadata_df`: 7000 rows with width, height, format, size_kb, mode
+- `train_df`: 7000 rows, columns=['ID', 'path', 'y']
+- `test_df`: 3000 rows, columns=['ID', 'path']
+- `train_metadata_df`: 7000 rows with source (mapped), width, height, format, size_kb, mode
 - Validation report logged to console
 
 **Key Checks (MUST All Pass):**
 ```
-✓ train_df.shape == (7000, 2)
-✓ test_df.shape == (3000, 1)
+✓ train_df.shape == (7000, 3)
+✓ test_df.shape == (3000, 2)
+✓ train_df['y'].min() == 0, train_df['y'].max() == 9
 ✓ All image paths resolve correctly
 ✓ class_counts: {class: 1000 for each of 10 classes}
-✓ No duplicate image_ids
+✓ No duplicate IDs
 ✓ All images readable (no corrupt files)
 ✓ Image modes: RGB (primary) or RGBA (handle separately)
 ```
@@ -221,9 +247,16 @@ ax.set_ylabel('Number of Images')
 ax.set_title('Training Data: Class Distribution')
 ax.set_ylim([900, 1100])  # Zoom to see if balanced
 for i, v in enumerate(class_counts):
+fig, ax = plt.subplots(figsize=(12, 6))
+class_counts.plot(kind='bar', ax=ax, color='steelblue')
+ax.set_xlabel('Generator Class')
+ax.set_ylabel('Number of Images')
+ax.set_title('Training Data: Class Distribution')
+ax.set_ylim([900, 1100])
+for i, v in enumerate(class_counts):
     ax.text(i, v + 10, str(v), ha='center', fontweight='bold')
 plt.tight_layout()
-plt.savefig('eda_outputs/class_distribution.png', dpi=100, bbox_inches='tight')
+plt.savefig('/kaggle/working/eda_outputs/class_distribution.png', dpi=100, bbox_inches='tight')
 plt.close()
 
 logger.info("✓ Saved class_distribution.png")
@@ -253,7 +286,7 @@ axes[1].set_xlabel('Height (pixels)')
 axes[1].set_ylabel('Count')
 axes[1].set_title('Height Distribution')
 plt.tight_layout()
-plt.savefig('eda_outputs/dimension_distribution.png', dpi=100, bbox_inches='tight')
+plt.savefig('/kaggle/working/eda_outputs/plots/dimension_distribution.png', dpi=100, bbox_inches='tight')
 plt.close()
 
 logger.info("✓ Saved dimension_distribution.png")
@@ -281,7 +314,7 @@ ax.set_ylabel('File Size (KB)')
 ax.set_title('File Size Distribution by Generator')
 ax.tick_params(axis='x', rotation=45)
 plt.tight_layout()
-plt.savefig('eda_outputs/filesize_boxplot.png', dpi=100, bbox_inches='tight')
+plt.savefig('/kaggle/working/eda_outputs/plots/filesize_boxplot.png', dpi=100, bbox_inches='tight')
 plt.close()
 
 logger.info("✓ Saved filesize_boxplot.png")
@@ -290,9 +323,6 @@ logger.info("✓ Saved filesize_boxplot.png")
 **Step 2.4: Generator Sample Grid (MOST IMPORTANT FOR EDA)**
 ```python
 # EXACT: Show sample images per class to understand generator signatures
-import random
-from PIL import Image
-
 fig, axes = plt.subplots(2, 5, figsize=(15, 6))  # 2 rows, 10 classes
 axes = axes.flatten()
 
@@ -302,8 +332,11 @@ for col_idx, class_name in enumerate(classes):
     class_images = train_metadata_df[train_metadata_df['source'] == class_name]
     sample_row = class_images.sample(1).iloc[0]
     
-    # Load and display
-    img_path = f"Data/Training/{sample_row['image_id']}.png"
+    # Load and display (use BASE_INPUT prefix)
+    img_id = sample_row['image_id']
+    # Find matching row in train_df to get path
+    train_row = train_df[train_df['ID'] == img_id].iloc[0]
+    img_path = f"{BASE_INPUT}{train_row['path']}"
     img = Image.open(img_path)
     
     axes[col_idx].imshow(img)
@@ -311,7 +344,7 @@ for col_idx, class_name in enumerate(classes):
     axes[col_idx].axis('off')
 
 plt.tight_layout()
-plt.savefig('eda_outputs/generator_samples.png', dpi=100, bbox_inches='tight')
+plt.savefig('/kaggle/working/eda_outputs/generator_samples.png', dpi=100, bbox_inches='tight')
 plt.close()
 
 logger.info("✓ Saved generator_samples.png - Visual inspection of each class")
@@ -350,18 +383,18 @@ eda_insights = {
     'num_classes': len(class_counts)
 }
 
-with open('eda_outputs/eda_insights.json', 'w') as f:
+with open('/kaggle/working/eda_outputs/eda_insights.json', 'w') as f:
     json.dump(eda_insights, f, indent=2)
 
 logger.info("✓ Saved eda_insights.json")
 ```
 
 **Outputs After Stage 2:**
-- `eda_outputs/class_distribution.png`: Bar chart of 1000 per class (should be flat)
-- `eda_outputs/dimension_distribution.png`: Histograms of width/height
-- `eda_outputs/filesize_boxplot.png`: File size variation per generator
-- `eda_outputs/generator_samples.png`: One image per class (visual inspection)
-- `eda_outputs/eda_insights.json`: JSON with all statistics
+- `/kaggle/working/eda_outputs/class_distribution.png`
+- `/kaggle/working/eda_outputs/dimension_distribution.png`
+- `/kaggle/working/eda_outputs/filesize_boxplot.png`
+- `/kaggle/working/eda_outputs/generator_samples.png`
+- `/kaggle/working/eda_outputs/eda_insights.json`
 
 **Key Insights to Observe:**
 ```
