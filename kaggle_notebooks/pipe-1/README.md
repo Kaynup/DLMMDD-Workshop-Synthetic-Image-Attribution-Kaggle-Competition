@@ -56,7 +56,7 @@ submission.csv (Ready for Kaggle!)
 
 **Exact File Paths (Kaggle Environment):**
 ```
-Input Files (in /kaggle/input/competitions/):
+Input Files (in /kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/Data/):
   - training.csv           (7000 rows: ID, path, y)
   - test.csv               (3000 rows: ID, path)
   - Data/Training/         (7000 .png files)
@@ -74,7 +74,7 @@ Output Files (Created in /kaggle/working/):
 
 **Exact Base Paths:**
 ```python
-BASE_INPUT = '/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/'
+BASE_INPUT = '/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/Data/'
 BASE_WORKING = '/kaggle/working/'
 
 # CSV paths
