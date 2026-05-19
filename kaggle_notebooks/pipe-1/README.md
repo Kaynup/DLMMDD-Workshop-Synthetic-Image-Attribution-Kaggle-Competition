@@ -56,7 +56,7 @@ submission.csv (Ready for Kaggle!)
 
 **Exact File Paths (Kaggle Environment):**
 ```
-Input Files (in /kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/Data/):
+Input Files (in /kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/):
   - training.csv           (7000 rows: ID, path, y)
   - test.csv               (3000 rows: ID, path)
   - Data/Training/         (7000 .png files)
@@ -74,12 +74,11 @@ Output Files (Created in /kaggle/working/):
 
 **Exact Base Paths:**
 ```python
-BASE_INPUT = '/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/Data/'
-BASE_WORKING = '/kaggle/working/'
+BASE_INPUT = '/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/'
 
 # CSV paths
-train_csv_path = f'{BASE_INPUT}training.csv'
-test_csv_path = f'{BASE_INPUT}test.csv'
+train_csv_path = f'{BASE_INPUT}Data/training.csv'
+test_csv_path = f'{BASE_INPUT}Data/test.csv'
 ```
 
 **CSV Structure:**
@@ -99,10 +98,10 @@ test.csv columns: ID, path
 **Step 1.1: Load CSVs**
 ```python
 # EXACT CODE PATTERN for Kaggle
-BASE_INPUT = '/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/'
+BASE_INPUT = '/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/'
 
-train_df = pd.read_csv(f'{BASE_INPUT}training.csv')  # shape: (7000, 3)
-test_df = pd.read_csv(f'{BASE_INPUT}test.csv')       # shape: (3000, 2)
+train_df = pd.read_csv(f'{BASE_INPUT}Data/training.csv')  # shape: (7000, 3)
+test_df = pd.read_csv(f'{BASE_INPUT}Data/test.csv')       # shape: (3000, 2)
 
 logger.info(f"Loaded training.csv: {train_df.shape}")
 logger.info(f"  Columns: {list(train_df.columns)}")
@@ -110,8 +109,8 @@ logger.info(f"  Sample path: {train_df['path'].iloc[0]}")
 logger.info(f"Loaded test.csv: {test_df.shape}")
 
 # VERIFY COLUMN NAMES
-assert list(train_df.columns) == ['image_id', 'source'], f"Got columns: {list(train_df.columns)}"
-assert list(test_df.columns) == ['image_id'], f"Got columns: {list(test_df.columns)}"
+assert list(train_df.columns) == ['ID', 'path', 'y'], f"Got columns: {list(train_df.columns)}"
+assert list(test_df.columns) == ['ID', 'path'], f"Got columns: {list(test_df.columns)}"
 ```
 
 **Step 1.2: Verify File Existence**
@@ -119,7 +118,7 @@ assert list(test_df.columns) == ['image_id'], f"Got columns: {list(test_df.colum
 # EXACT: Check every single file exists
 train_missing = []
 for idx, row in train_df.iterrows():
-    path = f"Data/Training/{row['image_id']}.png"
+    path = f"{BASE_INPUT}{row['path']}"
     if not os.path.exists(path):
         train_missing.append(path)
         
@@ -240,13 +239,6 @@ from pathlib import Path
 class_counts = train_metadata_df['source'].value_counts().sort_values(ascending=False)
 
 # Create bar chart and save
-fig, ax = plt.subplots(figsize=(12, 6))
-class_counts.plot(kind='bar', ax=ax, color='steelblue')
-ax.set_xlabel('Generator Class')
-ax.set_ylabel('Number of Images')
-ax.set_title('Training Data: Class Distribution')
-ax.set_ylim([900, 1100])  # Zoom to see if balanced
-for i, v in enumerate(class_counts):
 fig, ax = plt.subplots(figsize=(12, 6))
 class_counts.plot(kind='bar', ax=ax, color='steelblue')
 ax.set_xlabel('Generator Class')
