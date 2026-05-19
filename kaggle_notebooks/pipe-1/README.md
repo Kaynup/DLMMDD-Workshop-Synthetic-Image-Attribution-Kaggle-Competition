@@ -794,7 +794,7 @@ train_augmentation = A.Compose([
         contrast_limit=(-0.2, 0.2),
         p=0.5
     ),
-    A.GaussBlur(blur_limit=3, p=0.3),      # Gaussian blur
+    A.GaussianBlur(blur_limit=(3, 3), p=0.3),  # Gaussian blur
     A.RandomCrop(224, 224, p=0.1),         # Occasionally crop
     A.Normalize(
         mean=[0.485, 0.456, 0.406],
