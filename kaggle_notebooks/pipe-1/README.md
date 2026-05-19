@@ -40,7 +40,7 @@ submission.csv (Ready for Kaggle!)
 | Aspect | Details |
 |--------|---------|
 | **Task** | 10-class image classification (synthetic attribution) |
-| **Data** | 7,000 training images (1,000 per class), 3,000 test images |
+| **Data** | 7,000 training images (700 per class), 3,000 test images |
 | **Classes** | AuraFlow, Freepik, Lumina, Photon, Pixart-sigma, Playground v2.5, StableDiffusion3, SD3.5, SDXL-Turbo, Tencent Hunyuan |
 | **Challenge** | Test images have 1-3 unknown post-processing operations |
 | **Metric** | Classification Accuracy |
@@ -179,14 +179,15 @@ train_metadata_df = pd.DataFrame(train_metadata)
 
 **Step 1.4: Validate Class Distribution**
 ```python
-# EXACT: Every class must have EXACTLY 1000 images
+# EXACT: Every class must have EXACTLY 700 images
 class_counts = train_metadata_df['source'].value_counts()
 logger.info(f"\nClass distribution:\n{class_counts}")
 
-# VERIFY: Each class has exactly 1000
+# VERIFY: Each class has exactly 700
+expected_per_class = 700
 for class_name, count in class_counts.items():
-    assert count == 1000, f"Class {class_name} has {count} images, expected 1000"
-logger.info("✓ All 10 classes have exactly 1000 images")
+    assert count == expected_per_class, f"Class {class_name} has {count} images, expected {expected_per_class}"
+logger.info(f"✓ All {len(class_counts)} classes have exactly {expected_per_class} images ({len(class_counts) * expected_per_class} total)")
 
 # VERIFY: No duplicate IDs
 assert len(train_df) == len(train_df['ID'].unique()), "Duplicate image IDs found"
@@ -205,7 +206,7 @@ logger.info("✓ No duplicate image IDs")
 ✓ test_df.shape == (3000, 2)
 ✓ train_df['y'].min() == 0, train_df['y'].max() == 9
 ✓ All image paths resolve correctly
-✓ class_counts: {class: 1000 for each of 10 classes}
+✓ class_counts: {class: 700 for each of 10 classes}
 ✓ No duplicate IDs
 ✓ All images readable (no corrupt files)
 ✓ Image modes: RGB (primary) or RGBA (handle separately)
@@ -254,9 +255,9 @@ plt.close()
 
 logger.info("✓ Saved class_distribution.png")
 
-# VERIFY: All should be 1000
-assert all(v == 1000 for v in class_counts.values), "Classes not balanced!"
-logger.info("✓ Confirmed: All 10 classes have exactly 1000 images")
+# VERIFY: All should be 700
+assert all(v == 700 for v in class_counts.values), "Classes not balanced!"
+logger.info("✓ Confirmed: All 10 classes have exactly 700 images")
 ```
 
 **Step 2.2: Image Dimension Analysis**
