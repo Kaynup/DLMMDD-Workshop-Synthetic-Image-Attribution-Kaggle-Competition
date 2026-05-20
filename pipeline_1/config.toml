@@ -1,0 +1,128 @@
+# Synthetic Image Attribution Challenge - Pipeline Configuration
+# Configuration for all pipeline stages
+
+[competition]
+name = "DLMMDD Synthetic Image Attribution Challenge"
+num_classes = 10
+metric = "accuracy"
+data_dir = "../Data"
+train_csv = "training.csv"
+test_csv = "test.csv"
+sources_file = "sources.txt"
+
+[data]
+# Image dimensions for preprocessing
+target_height = 224
+target_width = 224
+color_mode = "RGB"  # RGB or Grayscale
+image_format = "numpy"  # numpy, torch, or PIL
+
+[preprocessing]
+# Normalization strategy: "imagenet" (ImageNet stats) or "minmax"
+normalization = "imagenet"
+# For ImageNet: mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+resize_method = "bilinear"  # bilinear or nearest
+handle_missing = "skip"  # skip or fill_color
+
+[augmentation]
+enabled = true
+# Training augmentation - applied during training
+train_augmentations = [
+    "random_horizontal_flip",
+    "random_rotation",
+    "random_brightness",
+    "random_contrast",
+    "random_affine",
+    "gaussian_blur",
+    "color_jitter"
+]
+# Probability of each augmentation
+horizontal_flip_p = 0.5
+rotation_degrees = 15
+brightness_factor = 0.2
+contrast_factor = 0.2
+affine_scale_range = [0.9, 1.1]
+gaussian_blur_radius = [0.5, 1.5]
+
+[train_val_split]
+# Stratified K-Fold cross-validation
+strategy = "stratified_kfold"  # stratified_kfold or random
+num_splits = 5
+random_state = 42
+shuffle = true
+
+[model]
+# Model architecture
+architecture = "efficientnet_b4"  # efficientnet_b0, b4, vit_base, resnet50
+pretrained = true
+num_classes = 10
+dropout_rate = 0.3
+
+# Feature extraction (if applicable)
+[feature_extraction]
+enabled = false
+extractor_model = "efficientnet_b4"
+layer_name = "avgpool"
+output_dim = 1280
+
+[training]
+num_epochs = 100
+batch_size = 32
+num_workers = 4
+pin_memory = true
+learning_rate = 1e-4
+optimizer = "adam"  # adam or sgd
+weight_decay = 1e-5
+scheduler = "cosine"  # cosine, step, exponential
+warmup_epochs = 5
+early_stopping_patience = 10
+early_stopping_metric = "val_accuracy"  # val_accuracy or val_f1_macro
+
+[training.scheduler]
+# Cosine annealing
+t_max = 95  # num_epochs - warmup_epochs
+eta_min = 1e-6
+
+[validation]
+# Evaluation metrics
+metrics = ["accuracy", "f1_macro", "precision_macro", "recall_macro"]
+compute_per_class_metrics = true
+save_confusion_matrix = true
+
+[checkpoint]
+# Checkpoint selection strategy
+selection_metric = "generalization_score"  # val_accuracy or generalization_score
+save_all_epochs = true
+save_frequency = 1  # Save every N epochs
+
+[inference]
+# Test-time inference
+tta_enabled = true  # Test-time augmentation
+tta_transforms = 5
+batch_size_inference = 32
+
+[ensemble]
+enabled = false
+num_models = 3
+strategy = "voting"  # voting or averaging
+weights = [0.33, 0.33, 0.34]
+
+[logging]
+level = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+log_dir = "logs"
+log_file = "pipeline.log"
+save_metrics_history = true
+plot_history = true
+
+[paths]
+# Relative to pipeline_1/ directory
+output_dir = "outputs"
+checkpoint_dir = "checkpoints"
+log_dir = "logs"
+processed_dir = "processed"
+submission_dir = "submissions"
+
+[reproducibility]
+seed = 42
+benchmark_cuda = false
+deterministic = true

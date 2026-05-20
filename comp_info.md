@@ -61,6 +61,7 @@ The project dataset files are structured as follows:
 ```text
 .
 ├── Data/
+│   │   Data/
 │   ├── Training/
 │   │   ├── 0.png
 │   │   ├── 1.png
@@ -138,3 +139,134 @@ If you use this dataset or participate in the challenge, please cite the worksho
   howpublished = {\url{https://kaggle.com/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge}}
 }
 ```
+
+
+
+sources.txt (175 B)
+/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/Data/sources.txt
+
+
+Copy
+0: AuraFlow
+1: Freepik
+2: Lumina
+3: Photon
+4: Pixart(sigma)
+5: Playground v2.5
+6: StableDiffusion3
+7: StableDiffusion3.5
+8: StableDiffusionXL-Turbo
+9: Tencent Hunyuan
+
+
+
+
+
+
+
+sample_submission.csv (23.69 kB)
+/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/Data/sample_submission.csv
+
+
+Copy
+
+2 of 2 columns
+
+
+ID
+
+TARGET
+6
+8
+12
+8
+16
+3
+17
+3
+18
+1
+23
+1
+27
+5
+
+
+
+
+
+
+
+test.csv (74.36 kB)
+/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/Data/test.csv
+
+
+Copy
+
+2 of 2 columns
+
+
+ID
+
+path
+6
+Data/Test/6.png
+12
+Data/Test/12.png
+16
+Data/Test/16.png
+17
+Data/Test/17.png
+18
+Data/Test/18.png
+23
+Data/Test/23.png
+27
+Data/Test/27.png
+
+
+
+
+
+
+
+
+
+
+
+
+training.csv (215.44 kB)
+/kaggle/input/competitions/dlmmdd-workshop-synthetic-source-attribution-challenge/Data/Data/training.csv
+
+
+Copy
+
+3 of 3 columns
+
+
+ID
+
+path
+
+y
+0
+Data/Training/0.png
+0
+1
+Data/Training/1.png
+8
+2
+Data/Training/2.png
+5
+3
+Data/Training/3.png
+0
+4
+Data/Training/4.png
+9
+5
+Data/Training/5.png
+9
+7
+Data/Training/7.png
+7
