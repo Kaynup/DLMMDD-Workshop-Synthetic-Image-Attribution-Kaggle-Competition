@@ -78,7 +78,7 @@ RUN_TRAINING = True
 RUN_INFERENCE_ONLY = False
 INFERENCE_ONLY_PATH = '/kaggle/input/models/punyakdei/pipe-1-tpu/pytorch/default/1'
 
-NUM_WORKERS = 4
+NUM_WORKERS = 0 if DEVICE_TYPE in {'tpu', 'cpu'} else 4
 PIN_MEMORY = False if DEVICE_TYPE in {'tpu', 'cpu'} else True
 PERSISTENT_WORKERS = False if DEVICE_TYPE in {'tpu', 'cpu'} else True
 
