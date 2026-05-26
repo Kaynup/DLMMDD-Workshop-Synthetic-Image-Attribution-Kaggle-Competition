@@ -78,7 +78,7 @@ RUN_TRAINING = True
 RUN_INFERENCE_ONLY = False
 INFERENCE_ONLY_PATH = '/kaggle/input/models/punyakdei/pipe-1-tpu/pytorch/default/1'
 
-NUM_WORKERS = 0 if DEVICE_TYPE in {'tpu', 'cpu'} else 2
+NUM_WORKERS = 4
 PIN_MEMORY = False if DEVICE_TYPE in {'tpu', 'cpu'} else True
 PERSISTENT_WORKERS = False if DEVICE_TYPE in {'tpu', 'cpu'} else True
 
@@ -667,15 +667,26 @@ class ImagePathDataset(Dataset):
         self.paths = [str(p) for p in paths]
         self.labels = None if labels is None else np.asarray(labels, dtype=np.int64)
         self.image_size = int(image_size)
+        self.cache = {}
 
     def __len__(self):
         return len(self.paths)
 
     def __getitem__(self, idx):
-        image = load_image_np(self.paths[idx], self.image_size)
+        path = self.paths[idx]
+
+        if path not in self.cache:
+            self.cache[path] = load_image_np(
+                path,
+                self.image_size
+            )
+
+        image = self.cache[path]
+
         if self.labels is None:
             return image
-        return image, int(self.labels[idx])
+
+        return image, self.labels[idx]
 
 
 def build_torch_dataloader(paths, labels=None, image_size: int = 224, batch_size: int = 32, training: bool = False, cache: bool | str = False):
@@ -689,7 +700,8 @@ def build_torch_dataloader(paths, labels=None, image_size: int = 224, batch_size
         drop_last=bool(training),
         num_workers=NUM_WORKERS,
         pin_memory=PIN_MEMORY,
-        persistent_workers=PERSISTENT_WORKERS if NUM_WORKERS > 0 else False,
+        persistent_workers=True if NUM_WORKERS > 0 else False,
+        prefetch_factor=2 if NUM_WORKERS > 0 else None,
     )
 
 
@@ -869,9 +881,37 @@ def _predict_from_images(predict_step, params, images):
     images = np.asarray(images)
     if PMAP_ENABLED:
         params_repl = _replicate_tree(params)
-        images_sharded, original_n = _shard_batch(images)
-        probs = predict_step(params_repl, jnp.asarray(images_sharded))
-        return _unshard_batch(np.asarray(probs), original_n)
+
+        images = np.asarray(images, dtype=np.float32)
+
+        usable = images.shape[0] - (images.shape[0] % NUM_DEVICES)
+
+        if usable == 0:
+            return np.empty((0, NUM_CLASSES), dtype=np.float32)
+
+        images = images[:usable]
+
+        per_device = usable // NUM_DEVICES
+
+        images = images.reshape(
+            NUM_DEVICES,
+            per_device,
+            *images.shape[1:]
+        )
+
+        probs = predict_step(
+            params_repl,
+            jax.device_put(images)
+        )
+
+        probs = np.asarray(probs)
+
+        probs = probs.reshape(
+            -1,
+            probs.shape[-1]
+        )
+
+        return probs
 
     probs = predict_step(params, jnp.asarray(images))
     return np.asarray(probs)
